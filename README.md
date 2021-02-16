@@ -8,7 +8,12 @@ Method is tested using jaxlib 0.1.61 and Python 3.9.
 
 Example usage:
 ```
-python main.py --env HalfCheetah-v2
+python main.py --env HalfCheetah-v3
 ```
+or
+```
+./run_experiments.sh
+```
+for full experiments.
 
 Training curves:
