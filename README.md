@@ -16,3 +16,11 @@ or
 ```
 for full experiments.
 
+## Example Plots
+
+<p float="left">
+  <img src="plots/TD3_HalfCheetah-v3.png" width="200" />
+  <img src="plots/TD3_Walker2d-v3.png" width="200" /> 
+  <img src="plots/TD3_Hopper-v3.png" width="200" />
+  <img src="plots/TD3_Ant-v3.png" width="200" />
+</p>
