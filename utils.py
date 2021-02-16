@@ -69,9 +69,9 @@ class Timer:
 
 class PRNGKeys:
 
-    def __init__(seed=0):
+    def __init__(self, seed=0):
         self._key = jrandom.PRNGKey(seed)
 
-    def get_key():
+    def get_key(self):
         self._key, subkey = jrandom.split(self._key)
         return subkey

@@ -6,8 +6,13 @@ import os
 import utils
 import TD3
 
+
+os.environ['XLA_PYTHON_CLIENT_PREALLOCATE'] = 'false'
+
+
 def type_bool(x):
     return x.lower() != 'false'
+
 
 # Runs policy for X episodes and returns average reward
 # A fixed seed is used for the eval environment
@@ -67,7 +72,6 @@ if __name__ == "__main__":
 
     # Set seeds
     env.seed(args.seed)
-    torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     
     state_dim = env.observation_space.shape[0]
@@ -81,6 +85,7 @@ if __name__ == "__main__":
         "discount": args.discount,
         "tau": args.tau,
         "jit": args.jit,
+        "seed": args.seed,
     }
 
     # Initialize policy
@@ -150,3 +155,5 @@ if __name__ == "__main__":
             evaluations.append(eval_policy(policy, args.env, args.seed))
             np.savetxt(f"./results/{file_name}.txt", evaluations, fmt='%.4g')
             if args.save_model: policy.save(f"./models/{file_name}")
+    print('Total time cost {:.4g}s.'.format(timer.time_cost()))
+    policy.save(f"./models/{file_name}")

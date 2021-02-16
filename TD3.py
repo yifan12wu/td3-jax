@@ -4,6 +4,9 @@ from jax import numpy as jnp
 from jax import random as jrandom
 from flax import linen as nn
 from flax import optim
+from flax import serialization
+
+import utils
 
 
 # Implementation of Twin Delayed Deep Deterministic Policy Gradients (TD3)
@@ -23,7 +26,8 @@ class Actor(nn.Module):
     def __call__(self, state):
         a = nn.relu(self.l1(state))
         a = nn.relu(self.l2(a))
-        return self.max_action * nn.tanh(self.l3(a))
+        action = self.max_action * nn.tanh(self.l3(a))
+        return action
 
 
 class Critic(nn.Module):
@@ -38,7 +42,6 @@ class Critic(nn.Module):
         self.l4 = nn.Dense(256)
         self.l5 = nn.Dense(256)
         self.l6 = nn.Dense(1)
-
 
     def __call__(self, state, action):
         sa = jnp.concatenate([state, action], axis=-1)
@@ -131,18 +134,19 @@ class TD3:
             transition,
             rng):
         state, action, next_state, reward, not_done = transition
+
         # get next action
         noise = jrandom.normal(rng, action.shape) * self.policy_noise
         noise = jnp.clip(noise, -self.noise_clip, self.noise_clip)
         next_action = self.actor_model.apply(actor_target_params, next_state)
         next_action = jnp.clip(next_action + noise, -self.max_action, self.max_action)
-
+        
         # Compute the target Q value
         target_Q1, target_Q2 = self.critic_model.apply(
                 critic_target_params, next_state, next_action)
         target_Q = jnp.minimum(target_Q1, target_Q2)
         target_Q = reward + not_done * self.discount * target_Q
-
+        
         # Get current Q estimates
         current_Q1, current_Q2 = self.critic_model.apply(critic_params, state, action)
 
@@ -150,6 +154,7 @@ class TD3:
         Q1_loss = jnp.mean(jnp.square(current_Q1 - target_Q))
         Q2_loss = jnp.mean(jnp.square(current_Q2 - target_Q))
         critic_loss = Q1_loss + Q2_loss
+
         return critic_loss
 
     def _critic_step(self,
@@ -205,6 +210,7 @@ class TD3:
                 transition,
                 critic_step_rng)
         self.critic_params = self.critic_optimizer.target
+        
 
         # Delayed policy updates
         if self.total_it % self.policy_freq == 0:
@@ -223,18 +229,20 @@ class TD3:
             self.actor_target_params, self.critic_target_params = updated_params
 
     def save(self, filename):
-        torch.save(self.critic.state_dict(), filename + "_critic")
-        torch.save(self.critic_optimizer.state_dict(), filename + "_critic_optimizer")
-        
-        torch.save(self.actor.state_dict(), filename + "_actor")
-        torch.save(self.actor_optimizer.state_dict(), filename + "_actor_optimizer")
+        critic_file = filename + '_critic.ckpt'
+        with open(critic_file, 'wb') as f:
+            f.write(serialization.to_bytes(self.critic_params))
+        actor_file = filename + '_actor.ckpt'
+        with open(actor_file, 'wb') as f:
+            f.write(serialization.to_bytes(self.actor_params))
 
     def load(self, filename):
-        self.critic.load_state_dict(torch.load(filename + "_critic"))
-        self.critic_optimizer.load_state_dict(torch.load(filename + "_critic_optimizer"))
-        self.critic_target = copy.deepcopy(self.critic)
-
-        self.actor.load_state_dict(torch.load(filename + "_actor"))
-        self.actor_optimizer.load_state_dict(torch.load(filename + "_actor_optimizer"))
-        self.actor_target = copy.deepcopy(self.actor)
+        critic_file = filename + '_critic.ckpt'
+        with open(critic_file, 'rb') as f:
+            self.critic_params = serialization.from_bytes(self.critic_params, f.read())
+        self.critic_target_params = self.critic_params
+        actor_file = filename + '_actor.ckpt'
+        with open(actor_file, 'rb') as f:
+            self.actor_params = serialization.from_bytes(self.actor_params, f.read())
+        self.actor_target_params = self.actor_params
         
