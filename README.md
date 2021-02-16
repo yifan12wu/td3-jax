@@ -16,4 +16,3 @@ or
 ```
 for full experiments.
 
-Training curves:
