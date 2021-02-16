@@ -27,6 +27,4 @@ do
     --env "Ant-v3" \
     --seed $i \
     --save_model
-
 done
-

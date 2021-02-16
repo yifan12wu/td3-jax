@@ -237,6 +237,7 @@ class TD3:
             f.write(serialization.to_bytes(self.actor_params))
 
     def load(self, filename):
+        # TODO: model loading is untested
         critic_file = filename + '_critic.ckpt'
         with open(critic_file, 'rb') as f:
             self.critic_params = serialization.from_bytes(self.critic_params, f.read())
