@@ -156,4 +156,5 @@ if __name__ == "__main__":
             np.savetxt(f"./results/{file_name}.txt", evaluations, fmt='%.4g')
             if args.save_model: policy.save(f"./models/{file_name}")
     print('Total time cost {:.4g}s.'.format(timer.time_cost()))
-    policy.save(f"./models/{file_name}")
+    if args.save_model:
+        policy.save(f"./models/{file_name}")
